@@ -19,4 +19,5 @@ Route::get('/', function () {
 
 Route::group(['name' => 'event.', 'prefix' => 'event'], function (){
     Route::get('artur.ics', [\App\Http\Controllers\EventController::class, 'artur'])->name('artur');
+    Route::get('birthday.ics', [\App\Http\Controllers\EventController::class, 'birthday'])->name('birthday');
 });

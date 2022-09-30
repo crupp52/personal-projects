@@ -3,9 +3,7 @@
 namespace App\Http\Controllers;
 
 use Carbon\Carbon;
-use DateTimeZone;
 use Illuminate\Http\Request;
-use Spatie\IcalendarGenerator\Components\Alert;
 use Spatie\IcalendarGenerator\Components\Calendar;
 use Spatie\IcalendarGenerator\Components\Event;
 use Spatie\IcalendarGenerator\Components\Timezone;
@@ -34,9 +32,42 @@ class EventController extends Controller
 
         $calendar->event($events);
 
+        return $this->makeCalendarResponse($calendar, 'artur.ics');
+    }
+
+    public function birthday()
+    {
+        $template = '🎂 Kitti %number%. születésnapja';
+
+        $birthDate = Carbon::createFromDate('1998', '03', '25')->startOfDay();
+
+        $today = Carbon::now()->startOfDay();
+
+        $currentBirthday = $birthDate->clone()->setYear($today->year);
+
+        $calendar = Calendar::create('Születésnapok')
+            ->timezone(new Timezone('Europe/Budapest '));
+
+        foreach (range(1, 10) as $year) {
+            $nextBirthday = $currentBirthday->addYear();
+
+            $number = $nextBirthday->diffInYears($birthDate);
+
+            $calendar->event(
+                Event::create(str_replace('%number%', $number, $template))
+                    ->startsAt($nextBirthday->toDateTime())
+                    ->fullDay()
+            );
+        }
+
+        return $this->makeCalendarResponse($calendar, 'birthday.ics');
+    }
+
+    private function makeCalendarResponse(Calendar $calendar, string $name = 'calendar.ics'): \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Contracts\Foundation\Application|\Illuminate\Http\Response
+    {
         return response($calendar->get(), 200, [
             'Content-Type' => 'text/calendar; charset=utf-8',
-            'Content-Disposition' => 'attachment; filename="artur.ics"',
+            'Content-Disposition' => 'attachment; filename="' . $name . '"',
         ]);
     }
 }
